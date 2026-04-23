@@ -1,0 +1,141 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Connection string to Supabase
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id // LINE UID from LIFF
+  displayName   String?
+  photoUrl      String?
+  role          Role      @default(LEARNER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  progress      UserProgress[]
+  scores        Score[]
+  certificates  Certificate[]
+  healthRecords HealthRecord[]
+  chatLogs      ChatLog[]
+}
+
+enum Role {
+  LEARNER
+  VHV       // อสม. (Village Health Volunteer) for monitoring
+  ADMIN
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  thumbnail   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  modules     Module[]
+  assessments Assessment[]
+}
+
+model Module {
+  id          String     @id @default(cuid())
+  courseId    String
+  course      Course     @relation(fields: [courseId], references: [id])
+  title       String
+  type        ModuleType // VIDEO or INFOGRAPHIC
+  contentUrl  String
+  order       Int
+  
+  progress    UserProgress[]
+}
+
+enum ModuleType {
+  VIDEO
+  INFOGRAPHIC
+}
+
+model Assessment {
+  id        String         @id @default(cuid())
+  courseId  String
+  course    Course         @relation(fields: [courseId], references: [id])
+  type      AssessmentType // PRE_TEST or POST_TEST
+  questions Question[]
+  scores    Score[]
+}
+
+enum AssessmentType {
+  PRE_TEST
+  POST_TEST
+}
+
+model Question {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  text         String
+  options      Json       // Store options like [ { "text": "...", "isCorrect": false }, ... ]
+}
+
+model UserProgress {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  moduleId      String
+  module        Module    @relation(fields: [moduleId], references: [id])
+  status        ProgressStatus @default(IN_PROGRESS)
+  watchDuration Int       @default(0) // Seconds (tracking video views)
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, moduleId])
+}
+
+enum ProgressStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Score {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  score        Int
+  passed       Boolean
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([userId, assessmentId]) // Stores only the latest/passed score per user per assessment
+}
+
+model HealthRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  bloodStatus String?  // e.g., "Normal", "Anemic"
+  measuredAt  DateTime @default(now())
+}
+
+model Certificate {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  issuedAt  DateTime @default(now())
+  pdfUrl    String?
+}
+
+// AI Assistant placeholder
+model ChatLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  response  String
+  createdAt DateTime @default(now())
+}
