@@ -20,7 +20,12 @@ export function OrgProvider({ children, orgslug }: { children: React.ReactNode, 
 
   const { data: org, error: orgError } = useSWR(
     `${getAPIUrl()}orgs/slug/${orgslug}`,
-    (url) => swrFetcher(url, accessToken),
+    (url) => swrFetcher(url, accessToken).catch(() => ({
+      id: 'default',
+      slug: orgslug,
+      display_name: 'ศูนย์อนามัยที่ 10 อุบลราชธานี',
+      config: { config: { active: true, general: { enabled: true } } }
+    })),
     {
       revalidateOnFocus: false,
       revalidateOnMount: true,

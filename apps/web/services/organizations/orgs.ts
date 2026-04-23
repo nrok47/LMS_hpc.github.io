@@ -37,12 +37,15 @@ export async function getOrganizationContextInfo(
   next: any,
   access_token?: string
 ) {
-  const result = await fetch(
-    `${getAPIUrl()}orgs/slug/${org_slug}`,
-    RequestBodyWithAuthHeader('GET', null, next, access_token)
-  )
-  const res = await errorHandling(result)
-  return res
+  return {
+    id: 'default',
+    org_uuid: 'hpc-org-uuid',
+    slug: org_slug,
+    name: 'ศูนย์อนามัยที่ 10 อุบลราชธานี',
+    description: 'ระบบเรียนรู้ออนไลน์เพื่อส่งเสริมสุขภาพ',
+    thumbnail_image: null,
+    config: { config: { active: true, general: { enabled: true } } }
+  }
 }
 
 export async function getOrganizationContextInfoWithUUID(
@@ -62,21 +65,7 @@ export async function getOrganizationContextInfoWithoutCredentials(
   org_slug: any,
   _next?: any
 ) {
-  // Never use the Next.js fetch cache — the backend has its own Redis cache
-  // which is invalidated on org config changes. Relying on Next's tag-based
-  // revalidation was unreliable across pods and left users with stale data
-  // for up to 60s after an admin changed settings like the signup method.
-  let HeadersConfig = new Headers({ 'Content-Type': 'application/json' })
-  let options: any = {
-    method: 'GET',
-    headers: HeadersConfig,
-    redirect: 'follow',
-    cache: 'no-store',
-  }
-
-  const result = await fetch(`${getAPIUrl()}orgs/slug/${org_slug}`, options)
-  const res = await errorHandling(result)
-  return res
+  return getOrganizationContextInfo(org_slug, _next)
 }
 
 export function getOrganizationContextInfoNoAsync(

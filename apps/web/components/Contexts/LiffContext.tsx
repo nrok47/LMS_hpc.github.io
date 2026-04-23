@@ -30,6 +30,9 @@ export const LiffProvider = ({ children }: { children: React.ReactNode }) => {
         const liff = (await import('@line/liff')).default
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID || ''
         
+        // Import supabase client
+        const { supabase } = await import('../../lib/supabase')
+
         if (!liffId) {
           console.warn('NEXT_PUBLIC_LIFF_ID is not set')
         }
@@ -40,6 +43,14 @@ export const LiffProvider = ({ children }: { children: React.ReactNode }) => {
         if (liff.isLoggedIn()) {
           const userProfile = await liff.getProfile()
           setProfile(userProfile)
+
+          // Sync to Supabase User table
+          await supabase.from('User').upsert({
+            id: userProfile.userId,
+            displayName: userProfile.displayName,
+            photoUrl: userProfile.pictureUrl,
+            updatedAt: new Date().toISOString(),
+          })
         } else {
           // Optional: Auto-login if needed
           // liff.login()

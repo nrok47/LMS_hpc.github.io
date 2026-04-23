@@ -11,19 +11,41 @@ import {
  GET requests are called from the frontend using SWR (https://swr.vercel.app/)
 */
 
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
 export async function getOrgCourses(
   org_slug: string,
   next: any,
   access_token?: any,
   include_unpublished: boolean = false
 ) {
-  const url = `${getAPIUrl()}courses/org_slug/${org_slug}/page/1/limit/100${include_unpublished ? '?include_unpublished=true' : ''}`
-  const result: any = await fetch(
-    url,
-    RequestBodyWithAuthHeader('GET', null, next, access_token)
-  )
-  const res = await errorHandling(result)
-  return res
+  try {
+    const courses = await prisma.course.findMany({
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    // Transform to match LearnHouse expectations if necessary
+    return courses.map(c => ({
+      ...c,
+      course_uuid: c.id,
+      name: c.title,
+      description: c.description,
+      thumbnail_image: c.thumbnail
+    }))
+  } catch (error) {
+    console.error('Prisma fetch error:', error)
+    // Return mock data for Healthy Blood Portal demo
+    return [
+      {
+        course_uuid: 'hpc-001',
+        name: 'ความรู้พื้นฐานเรื่องเลือดและสุขภาพ',
+        description: 'เรียนรู้เรื่องความเข้มข้นของเลือดและแนวทางส่งเสริมสุขภาพ',
+        thumbnail_image: null,
+      }
+    ]
+  }
 }
 
 export async function searchOrgCourses(

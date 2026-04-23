@@ -128,6 +128,9 @@
     "y-prosemirror": "^1.2.12",
     "yjs": "^13.6.20",
     "@line/liff": "^2.23.2",
+    "@prisma/client": "^6.4.1",
+    "@supabase/supabase-js": "^2.45.4",
+    "prisma": "^6.4.1",
     "yup": "^1.7.1"
   },
   "devDependencies": {
