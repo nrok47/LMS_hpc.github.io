@@ -43,7 +43,7 @@ export async function getOrganizationContextInfo(
     slug: org_slug,
     name: 'ศูนย์อนามัยที่ 10 อุบลราชธานี',
     description: 'ระบบเรียนรู้ออนไลน์เพื่อส่งเสริมสุขภาพ',
-    thumbnail_image: null,
+    thumbnail_image: 'default-thumbnail',
     config: { config: { active: true, general: { enabled: true } } }
   }
 }
