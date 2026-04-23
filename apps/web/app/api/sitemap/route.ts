@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
           loc: `${baseUrl}course/${course.course_uuid.replace('course_', '')}`,
           priority: 0.7,
           changefreq: 'weekly',
-          lastmod: course.update_date,
+          lastmod: (course as any).update_date || new Date().toISOString(),
         })
       }
       break
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
                       loc: `${baseUrl}course/${course.course_uuid.replace('course_', '')}/activity/${activityId}`,
                       priority: 0.6,
                       changefreq: 'weekly',
-                      lastmod: activity.update_date,
+                      lastmod: (activity as any).update_date || new Date().toISOString(),
                     })
                   }
                 }
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
           loc: `${baseUrl}collections/${collection.collection_uuid.replace('collection_', '')}`,
           priority: 0.6,
           changefreq: 'weekly',
-          lastmod: collection.update_date,
+          lastmod: (collection as any).update_date || new Date().toISOString(),
         })
       }
       break
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
           loc: `${baseUrl}podcast/${podcast.podcast_uuid.replace('podcast_', '')}`,
           priority: 0.7,
           changefreq: 'weekly',
-          lastmod: podcast.update_date,
+          lastmod: (podcast as any).update_date || new Date().toISOString(),
         })
       }
       break
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
           loc: `${baseUrl}community/${community.community_uuid.replace('community_', '')}`,
           priority: 0.6,
           changefreq: 'weekly',
-          lastmod: community.update_date,
+          lastmod: (community as any).update_date || new Date().toISOString(),
         })
       }
       break
