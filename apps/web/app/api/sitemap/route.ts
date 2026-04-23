@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       break
     }
     case 'collections': {
-      const collections = await getOrgCollections(orgInfo.id).catch(() => [])
+      const collections = await getOrgCollections(String(orgInfo.id)).catch(() => [])
       for (const collection of collections) {
         sitemapUrls.push({
           loc: `${baseUrl}collections/${collection.collection_uuid.replace('collection_', '')}`,
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       break
     }
     case 'communities': {
-      const communities = await getCommunities(orgInfo.id, 1, 1000, null).catch(() => [])
+      const communities = await getCommunities(Number(orgInfo.id), 1, 1000, null).catch(() => [])
       for (const community of communities) {
         sitemapUrls.push({
           loc: `${baseUrl}community/${community.community_uuid.replace('community_', '')}`,
