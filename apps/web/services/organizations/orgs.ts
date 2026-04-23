@@ -38,7 +38,7 @@ export async function getOrganizationContextInfo(
   access_token?: string
 ) {
   return {
-    id: 'default',
+    id: 1,
     org_uuid: 'hpc-org-uuid',
     slug: org_slug,
     name: 'ศูนย์อนามัยที่ 10 อุบลราชธานี',

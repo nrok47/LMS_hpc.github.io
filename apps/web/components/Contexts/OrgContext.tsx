@@ -21,7 +21,7 @@ export function OrgProvider({ children, orgslug }: { children: React.ReactNode, 
   const { data: org, error: orgError } = useSWR(
     `${getAPIUrl()}orgs/slug/${orgslug}`,
     (url) => swrFetcher(url, accessToken).catch(() => ({
-      id: 'default',
+      id: 1,
       slug: orgslug,
       display_name: 'ศูนย์อนามัยที่ 10 อุบลราชธานี',
       config: { config: { active: true, general: { enabled: true } } }
