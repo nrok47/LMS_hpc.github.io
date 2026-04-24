@@ -1,20 +1,29 @@
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
--- CreateEnum
-CREATE TYPE "Role" AS ENUM ('LEARNER', 'VHV', 'ADMIN');
+-- CreateEnum (safe re-run)
+DO $$ BEGIN
+  CREATE TYPE "Role" AS ENUM ('LEARNER', 'VHV', 'ADMIN');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateEnum
-CREATE TYPE "ModuleType" AS ENUM ('VIDEO', 'INFOGRAPHIC');
+DO $$ BEGIN
+  CREATE TYPE "ModuleType" AS ENUM ('VIDEO', 'INFOGRAPHIC');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateEnum
-CREATE TYPE "AssessmentType" AS ENUM ('PRE_TEST', 'POST_TEST');
+DO $$ BEGIN
+  CREATE TYPE "AssessmentType" AS ENUM ('PRE_TEST', 'POST_TEST');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateEnum
-CREATE TYPE "ProgressStatus" AS ENUM ('IN_PROGRESS', 'COMPLETED');
+DO $$ BEGIN
+  CREATE TYPE "ProgressStatus" AS ENUM ('IN_PROGRESS', 'COMPLETED');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- CreateTable
-CREATE TABLE "User" (
+CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL,
     "displayName" TEXT,
     "photoUrl" TEXT,
@@ -25,8 +34,7 @@ CREATE TABLE "User" (
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Course" (
+CREATE TABLE IF NOT EXISTS "Course" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
@@ -37,8 +45,7 @@ CREATE TABLE "Course" (
     CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Module" (
+CREATE TABLE IF NOT EXISTS "Module" (
     "id" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -49,8 +56,7 @@ CREATE TABLE "Module" (
     CONSTRAINT "Module_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Assessment" (
+CREATE TABLE IF NOT EXISTS "Assessment" (
     "id" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
     "type" "AssessmentType" NOT NULL,
@@ -58,8 +64,7 @@ CREATE TABLE "Assessment" (
     CONSTRAINT "Assessment_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Question" (
+CREATE TABLE IF NOT EXISTS "Question" (
     "id" TEXT NOT NULL,
     "assessmentId" TEXT NOT NULL,
     "text" TEXT NOT NULL,
@@ -68,8 +73,7 @@ CREATE TABLE "Question" (
     CONSTRAINT "Question_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "UserProgress" (
+CREATE TABLE IF NOT EXISTS "UserProgress" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "moduleId" TEXT NOT NULL,
@@ -80,8 +84,7 @@ CREATE TABLE "UserProgress" (
     CONSTRAINT "UserProgress_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Score" (
+CREATE TABLE IF NOT EXISTS "Score" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "assessmentId" TEXT NOT NULL,
@@ -93,8 +96,7 @@ CREATE TABLE "Score" (
     CONSTRAINT "Score_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "HealthRecord" (
+CREATE TABLE IF NOT EXISTS "HealthRecord" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "bloodStatus" TEXT,
@@ -103,8 +105,7 @@ CREATE TABLE "HealthRecord" (
     CONSTRAINT "HealthRecord_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Certificate" (
+CREATE TABLE IF NOT EXISTS "Certificate" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
@@ -114,8 +115,7 @@ CREATE TABLE "Certificate" (
     CONSTRAINT "Certificate_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "ChatLog" (
+CREATE TABLE IF NOT EXISTS "ChatLog" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "message" TEXT NOT NULL,
@@ -125,39 +125,67 @@ CREATE TABLE "ChatLog" (
     CONSTRAINT "ChatLog_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "UserProgress_userId_moduleId_key" ON "UserProgress"("userId", "moduleId");
+-- CreateIndex (safe re-run)
+CREATE UNIQUE INDEX IF NOT EXISTS "UserProgress_userId_moduleId_key" ON "UserProgress"("userId", "moduleId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Score_userId_assessmentId_key" ON "Score"("userId", "assessmentId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Score_userId_assessmentId_key" ON "Score"("userId", "assessmentId");
+-- AddForeignKey (safe re-run)
+DO $$ BEGIN
+  ALTER TABLE "Module" ADD CONSTRAINT "Module_courseId_fkey"
+    FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Module" ADD CONSTRAINT "Module_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Assessment" ADD CONSTRAINT "Assessment_courseId_fkey"
+    FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Assessment" ADD CONSTRAINT "Assessment_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Question" ADD CONSTRAINT "Question_assessmentId_fkey"
+    FOREIGN KEY ("assessmentId") REFERENCES "Assessment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Question" ADD CONSTRAINT "Question_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "Assessment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "UserProgress" ADD CONSTRAINT "UserProgress_userId_fkey"
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "UserProgress" ADD CONSTRAINT "UserProgress_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "UserProgress" ADD CONSTRAINT "UserProgress_moduleId_fkey"
+    FOREIGN KEY ("moduleId") REFERENCES "Module"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "UserProgress" ADD CONSTRAINT "UserProgress_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "Module"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Score" ADD CONSTRAINT "Score_userId_fkey"
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Score" ADD CONSTRAINT "Score_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Score" ADD CONSTRAINT "Score_assessmentId_fkey"
+    FOREIGN KEY ("assessmentId") REFERENCES "Assessment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Score" ADD CONSTRAINT "Score_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "Assessment"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "HealthRecord" ADD CONSTRAINT "HealthRecord_userId_fkey"
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "HealthRecord" ADD CONSTRAINT "HealthRecord_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "Certificate" ADD CONSTRAINT "Certificate_userId_fkey"
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Certificate" ADD CONSTRAINT "Certificate_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "ChatLog" ADD CONSTRAINT "ChatLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
+DO $$ BEGIN
+  ALTER TABLE "ChatLog" ADD CONSTRAINT "ChatLog_userId_fkey"
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
