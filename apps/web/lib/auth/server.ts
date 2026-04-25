@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers'
 
-const BACKEND_URL = (process.env.NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL || 'http://localhost:1338').replace(/\/+$/, '')
+const RAW_BACKEND_URL = process.env.NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL || ''
+// If no backend URL is configured (e.g. Vercel with LIFF-only auth), skip backend calls
+const BACKEND_URL = RAW_BACKEND_URL ? RAW_BACKEND_URL.replace(/\/+$/, '') : null
 
 // Cookie names (must match the API routes)
 const ACCESS_TOKEN_COOKIE = 'access_token_cookie'
@@ -24,6 +26,9 @@ export interface Session {
  * they are reliably readable by the Next.js server.
  */
 export async function getServerSession(): Promise<Session | null> {
+  // No backend configured — LIFF-only mode, no session to fetch
+  if (!BACKEND_URL) return null
+
   try {
     const cookieStore = await cookies()
 
@@ -124,6 +129,8 @@ export async function getServerSession(): Promise<Session | null> {
  * This is a lightweight alternative when you only need the token.
  */
 export async function getServerAccessToken(): Promise<string | null> {
+  if (!BACKEND_URL) return null
+
   try {
     const cookieStore = await cookies()
 
