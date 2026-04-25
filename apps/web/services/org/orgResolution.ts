@@ -176,7 +176,7 @@ async function fetchOrgBySlug(orgslug: string): Promise<ResolvedOrg | null> {
   try {
     const org = await getOrganizationContextInfoWithoutCredentials(orgslug)
 
-    if (!org || org.error) {
+    if (!org || (org as any).error) {
       return null
     }
 
@@ -194,7 +194,7 @@ async function fetchOrgByUUID(orgUUID: string): Promise<ResolvedOrg | null> {
   try {
     const org = await getOrganizationContextInfoWithUUID(orgUUID, null, '')
 
-    if (!org || org.error) {
+    if (!org || (org as any).error) {
       return null
     }
 

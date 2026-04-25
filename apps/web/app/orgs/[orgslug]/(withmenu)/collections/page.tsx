@@ -60,7 +60,7 @@ const CollectionsPage = async (params: any) => {
   })
   const org_id = org.id
   const collections = await getOrgCollections(
-    org_id,
+    String(org_id),
     access_token ?? undefined,
     { revalidate: 120, tags: ['collections'] }
   )

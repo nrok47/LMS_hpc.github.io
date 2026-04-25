@@ -16,10 +16,14 @@ import { Input } from '@components/ui/input'
 import { Button } from '@components/ui/button'
 
 interface Course {
-  id: number
+  id: string | number
   course_uuid: string
   name: string
-  description: string
+  description?: string | null
+  thumbnail_image?: string | null
+  thumbnail?: string | null
+  title?: string
+  [key: string]: any
 }
 
 const CommunityEditCourse: React.FC = () => {
@@ -45,7 +49,7 @@ const CommunityEditCourse: React.FC = () => {
       setIsLoadingCourses(true)
       try {
         const result = await getOrgCourses(org.slug, null, accessToken)
-        setCourses(result || [])
+        setCourses((result || []) as any)
       } catch (error) {
         console.error('Failed to fetch courses:', error)
       } finally {

@@ -96,7 +96,7 @@ const OrgHomePage = async (params: any) => {
   ])
   const org_id = org.id
   const collections = await getOrgCollections(
-    org.id,
+    String(org.id),
     access_token ?? undefined,
     { revalidate: 120, tags: ['courses'] }
   )

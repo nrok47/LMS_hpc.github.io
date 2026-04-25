@@ -44,7 +44,27 @@ export async function getOrganizationContextInfo(
     name: 'ศูนย์อนามัยที่ 10 อุบลราชธานี',
     description: 'ระบบเรียนรู้ออนไลน์เพื่อส่งเสริมสุขภาพ',
     thumbnail_image: 'default-thumbnail',
-    config: { config: { active: true, general: { enabled: true } } }
+    logo_image: '' as string,
+    config: {
+      config: {
+        active: true,
+        general: { enabled: true },
+        customization: { landing: null, general: {} },
+        landing: null,
+        resolved_features: {
+          courses: { enabled: true },
+          payments: { enabled: false },
+          boards: { enabled: false },
+          ai: { enabled: false },
+        },
+        features: {
+          courses: { enabled: true },
+          payments: { enabled: false },
+          boards: { enabled: false },
+          ai: { enabled: false },
+        },
+      } as any,
+    },
   }
 }
 

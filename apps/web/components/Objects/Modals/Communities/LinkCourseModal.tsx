@@ -18,10 +18,14 @@ interface LinkCourseModalProps {
 }
 
 interface Course {
-  id: number
+  id: string | number
   course_uuid: string
   name: string
-  description: string
+  description?: string | null
+  thumbnail_image?: string | null
+  thumbnail?: string | null
+  title?: string
+  [key: string]: any
 }
 
 export function LinkCourseModal({
@@ -48,7 +52,7 @@ export function LinkCourseModal({
       setIsLoadingCourses(true)
       try {
         const result = await getOrgCourses(orgSlug, null, accessToken)
-        setCourses(result || [])
+        setCourses((result || []) as any)
       } catch (_error) {
         // silent — empty list handles it
       } finally {
