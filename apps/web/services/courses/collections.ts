@@ -49,10 +49,15 @@ export async function getOrgCollections(
   access_token?: string,
   next?: any
 ) {
-  const result: any = await fetch(
-    `${getAPIUrl()}collections/org/${org_id}/page/1/limit/10`,
-    RequestBodyWithAuthHeader('GET', null, next, access_token)
-  )
-  const res = await errorHandling(result)
-  return res
+  try {
+    const result: any = await fetch(
+      `${getAPIUrl()}collections/org/${org_id}/page/1/limit/10`,
+      RequestBodyWithAuthHeader('GET', null, next, access_token)
+    )
+    const res = await errorHandling(result)
+    return res
+  } catch (error) {
+    console.error('getOrgCollections error:', error)
+    return []
+  }
 }
