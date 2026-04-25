@@ -32,7 +32,8 @@ const nextConfig = {
     ]
   },
   reactStrictMode: false,
-  output: 'standalone',
+  // standalone only for Docker; Vercel manages its own output
+  output: process.env.VERCEL ? undefined : 'standalone',
   images: {
     remotePatterns: [
       {
