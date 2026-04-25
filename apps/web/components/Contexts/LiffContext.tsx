@@ -45,12 +45,14 @@ export const LiffProvider = ({ children }: { children: React.ReactNode }) => {
           setProfile(userProfile)
 
           // Sync to Supabase User table
-          await supabase.from('User').upsert({
-            id: userProfile.userId,
-            displayName: userProfile.displayName,
-            photoUrl: userProfile.pictureUrl,
-            updatedAt: new Date().toISOString(),
-          })
+          if (supabase) {
+            await supabase.from('User').upsert({
+              id: userProfile.userId,
+              displayName: userProfile.displayName,
+              photoUrl: userProfile.pictureUrl,
+              updatedAt: new Date().toISOString(),
+            })
+          }
         } else {
           // Optional: Auto-login if needed
           // liff.login()
