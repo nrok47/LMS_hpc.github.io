@@ -1,56 +1,15 @@
-import { Metadata } from 'next'
-import { getOrganizationContextInfo } from '@services/organizations/orgs'
-import { getOrgSlug } from '@services/org/orgResolution'
-import SignUpClient from './signup'
-import { Suspense } from 'react'
-import PageLoading from '@components/Objects/Loaders/PageLoading'
-import OrgNotFound from '@components/Objects/StyledElements/Error/OrgNotFound'
+'use client'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const orgslug = await getOrgSlug()
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
-  if (!orgslug) {
-    return { title: 'Sign up — LearnHouse' }
-  }
+// Redirect all signup attempts to the LINE LIFF login page
+export default function SignUpPage() {
+  const router = useRouter()
 
-  let org: any = null
-  try {
-    org = await getOrganizationContextInfo(orgslug, null)
-  } catch {
-    // Stale cookie or unknown org — fall back to generic title
-  }
+  useEffect(() => {
+    router.replace('/auth/login')
+  }, [router])
 
-  return {
-    title: 'Sign up' + ` — ${org?.name || 'LearnHouse'}`,
-    robots: { index: false, follow: false },
-  }
+  return null
 }
-
-const SignUp = async () => {
-  const orgslug = await getOrgSlug()
-
-  if (!orgslug) {
-    return <OrgNotFound />
-  }
-
-  let org: any = null
-  try {
-    org = await getOrganizationContextInfo(orgslug, null)
-  } catch {
-    return <OrgNotFound />
-  }
-
-  if (!org) {
-    return <OrgNotFound />
-  }
-
-  return (
-    <>
-      <Suspense fallback={<PageLoading />}>
-        <SignUpClient org={org} />
-      </Suspense>
-    </>
-  )
-}
-
-export default SignUp
