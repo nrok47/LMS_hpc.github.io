@@ -207,8 +207,8 @@ export default async function proxy(req: NextRequest) {
     return response
   }
 
-  // Auth callbacks - pass through without org rewrite
-  if (pathname.startsWith('/auth/sso/') || pathname.startsWith('/auth/callback/') || pathname.startsWith('/auth/token-exchange')) {
+  // Auth routes - pass through without org rewrite
+  if (pathname.startsWith('/auth/')) {
     const response = NextResponse.rewrite(new URL(`${pathname}${search}`, req.url))
     setInstanceCookies(response, instanceInfo)
     return response
