@@ -1,42 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useLiff } from '@components/Contexts/LiffContext'
 
 export default function LineLoginClient() {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { liff, isLoggedIn, error: liffError } = useLiff()
 
   useEffect(() => {
-    const initAndLogin = async () => {
-      try {
-        const liff = (await import('@line/liff')).default
-        const liffId = process.env.NEXT_PUBLIC_LIFF_ID || ''
+    // Wait until LiffProvider has finished initializing
+    if (!liff) return
 
-        if (!liffId) {
-          setError('LIFF ID ไม่ถูกตั้งค่า กรุณาติดต่อผู้ดูแลระบบ')
-          setLoading(false)
-          return
-        }
-
-        await liff.init({ liffId })
-
-        if (!liff.isLoggedIn()) {
-          // Redirect to LINE login immediately
-          liff.login()
-          return
-        }
-
-        // Already logged in — redirect to home
-        window.location.href = '/'
-      } catch (err: any) {
-        console.error('LIFF init error:', err)
-        setError('เกิดข้อผิดพลาดในการเชื่อมต่อ LINE กรุณาเปิดผ่าน LINE แอปพลิเคชัน')
-        setLoading(false)
-      }
+    if (isLoggedIn) {
+      window.location.href = '/'
+    } else {
+      liff.login()
     }
+  }, [liff, isLoggedIn])
 
-    initAndLogin()
-  }, [])
+  const error = liffError
+    ? 'เกิดข้อผิดพลาดในการเชื่อมต่อ LINE กรุณาเปิดผ่าน LINE แอปพลิเคชัน'
+    : null
 
   return (
     <div
