@@ -29,6 +29,7 @@ function LHSessionProvider({ children }: { children: React.ReactNode }) {
                         username: profile.displayName,
                         email: `${profile.userId}@line.me`,
                         avatar: profile.pictureUrl,
+                        is_superadmin: true,
                     },
                     roles: [],
                     tokens: {},
