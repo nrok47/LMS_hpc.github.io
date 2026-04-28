@@ -115,11 +115,41 @@ const CourseClient = (props: any) => {
   // Determine the active error (server-side or client-side)
   const activeError = serverError || courseError
 
-  // Show error if course fetch failed
-  if (!course && activeError) {
+  // Show error if course fetch failed with an explicit error status (e.g. 403)
+  // but still render when backend is simply unreachable (status undefined)
+  if (!course && activeError?.status) {
     return (
       <GeneralWrapperStyled>
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+        {/* Still show exam/certificate sections even on error */}
+        {hasPreTest && !preTestPassed && (
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <div className="flex items-center gap-2 text-blue-700">
+              <span className="text-lg">📋</span>
+              <span className="text-sm font-medium">ทำแบบทดสอบก่อนเรียน</span>
+            </div>
+            <button
+              onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/pretest`)}
+              className="flex-shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              เริ่มทำ
+            </button>
+          </div>
+        )}
+        {hasPostTest && (
+          <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-3 text-lg font-bold text-gray-800">📝 แบบทดสอบหลังเรียน</h3>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <p className="flex-1 text-sm text-gray-500">ทำแบบทดสอบหลังเรียนให้ผ่าน 70% เพื่อรับใบประกาศ</p>
+              <button
+                onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/posttest`)}
+                className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+              >
+                ทำแบบทดสอบหลังเรียน
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col items-center justify-center min-h-[30vh] text-center px-4">
           <h2 className="text-xl font-semibold text-gray-700 mb-2">
             {t('course.accessDenied', 'Unable to access this course')}
           </h2>
@@ -263,6 +293,59 @@ const CourseClient = (props: any) => {
   }
 
   const jsonLd = generateJsonLd()
+
+  // Backend unreachable (no status code) — show minimal page with exam sections only
+  if (!course) {
+    return (
+      <GeneralWrapperStyled>
+        <div className="pb-4 text-gray-400 text-sm">กำลังโหลดข้อมูลหลักสูตร...</div>
+
+        {hasPreTest && !preTestPassed && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <div className="flex items-center gap-2 text-blue-700">
+              <span className="text-lg">📋</span>
+              <span className="text-sm font-medium">ทำแบบทดสอบก่อนเรียนเพื่อประเมินความรู้เบื้องต้น</span>
+            </div>
+            <button
+              onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/pretest`)}
+              className="flex-shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              เริ่มทำ
+            </button>
+          </div>
+        )}
+
+        {hasPostTest && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-3 text-lg font-bold text-gray-800">
+              {hasCertificate ? '🏆 ใบประกาศนียบัตร' : '📝 แบบทดสอบหลังเรียน'}
+            </h3>
+            {hasCertificate ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <p className="flex-1 text-sm text-gray-500">คุณได้รับใบประกาศแล้ว</p>
+                <button
+                  onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/certificate`)}
+                  className="rounded-xl bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+                >
+                  ดูใบประกาศ
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <p className="flex-1 text-sm text-gray-500">ทำแบบทดสอบหลังเรียนให้ผ่าน 70% เพื่อรับใบประกาศ</p>
+                <button
+                  onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/posttest`)}
+                  className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  ทำแบบทดสอบหลังเรียน
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </GeneralWrapperStyled>
+    )
+  }
 
   return (
     <>

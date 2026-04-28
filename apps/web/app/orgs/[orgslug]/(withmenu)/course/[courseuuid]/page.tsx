@@ -137,10 +137,10 @@ const CoursePage = async (params: any) => {
     notFound()
   }
 
-  // For anonymous visitors denied access to a non-public course, pretend it
-  // doesn't exist (404) rather than showing an access-denied screen — that
-  // would otherwise confirm the course's existence and leak its URL.
-  if (!course_meta && fetchError && !access_token) {
+  // Only 404 if the backend explicitly returned 404 (course genuinely not found).
+  // If the backend is unreachable (fetchError.status is undefined), fall through
+  // so the course page can still render with exam/certificate sections.
+  if (!course_meta && fetchError?.status === 404 && !access_token) {
     notFound()
   }
 
