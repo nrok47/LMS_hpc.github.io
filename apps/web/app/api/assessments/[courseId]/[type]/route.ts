@@ -34,12 +34,8 @@ export async function GET(
     }
 
     return NextResponse.json({ assessment: safeAssessment })
-  } catch (error: any) {
+  } catch (error) {
     console.error('[GET assessment]', error)
-    return NextResponse.json({
-      error: 'Server error',
-      detail: error?.message ?? String(error),
-      env_db: process.env.DATABASE_URL ? 'set' : 'MISSING',
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
