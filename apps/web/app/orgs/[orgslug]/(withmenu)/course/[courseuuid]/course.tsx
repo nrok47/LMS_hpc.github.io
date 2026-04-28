@@ -24,6 +24,8 @@ import { useTranslation } from 'react-i18next'
 import CourseCommunitySection from '@components/Objects/Communities/CourseCommunitySection'
 import CourseShare from '@components/Objects/Courses/CourseShare/CourseShare'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useLiff } from '@components/Contexts/LiffContext'
+import { getAssessment, getMyScore, getMyCertificate } from '@services/courses/assessments'
 
 const CourseClient = (props: any) => {
   const { t } = useTranslation()
@@ -39,6 +41,14 @@ const CourseClient = (props: any) => {
   const isMobile = useMediaQuery('(max-width: 768px)')
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
+  const { profile } = useLiff()
+  const lineUserId = profile?.userId ?? ''
+
+  const [hasPreTest, setHasPreTest] = useState(false)
+  const [preTestPassed, setPreTestPassed] = useState(false)
+  const [hasPostTest, setHasPostTest] = useState(false)
+  const [postTestPassed, setPostTestPassed] = useState(false)
+  const [hasCertificate, setHasCertificate] = useState(false)
 
   // Fetch course data client-side if server didn't provide it (e.g., auth failed on server)
   const { data: clientCourseData, error: courseError, isLoading: courseLoading } = useSWR(
@@ -73,6 +83,30 @@ const CourseClient = (props: any) => {
     { revalidateOnFocus: false, dedupingInterval: 30000 }
   );
 
+  useEffect(() => {
+    if (!courseuuid) return
+    Promise.all([
+      getAssessment(courseuuid, 'PRE_TEST'),
+      getAssessment(courseuuid, 'POST_TEST'),
+    ]).then(([pre, post]) => {
+      setHasPreTest(!!pre)
+      setHasPostTest(!!post)
+    })
+  }, [courseuuid])
+
+  useEffect(() => {
+    if (!lineUserId || !courseuuid) return
+    Promise.all([
+      getMyScore(courseuuid, 'PRE_TEST', lineUserId),
+      getMyScore(courseuuid, 'POST_TEST', lineUserId),
+      getMyCertificate(courseuuid, lineUserId),
+    ]).then(([preScore, postScore, certificate]) => {
+      setPreTestPassed(!!preScore?.passed)
+      setPostTestPassed(!!postScore?.passed)
+      setHasCertificate(!!certificate)
+    })
+  }, [lineUserId, courseuuid])
+
   // Show loading state if fetching course data client-side
   if (!initialCourse && !serverError && courseLoading) {
     return <PageLoading />
@@ -81,11 +115,41 @@ const CourseClient = (props: any) => {
   // Determine the active error (server-side or client-side)
   const activeError = serverError || courseError
 
-  // Show error if course fetch failed
-  if (!course && activeError) {
+  // Show error if course fetch failed with an explicit error status (e.g. 403)
+  // but still render when backend is simply unreachable (status undefined)
+  if (!course && activeError?.status) {
     return (
       <GeneralWrapperStyled>
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+        {/* Still show exam/certificate sections even on error */}
+        {hasPreTest && !preTestPassed && (
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <div className="flex items-center gap-2 text-blue-700">
+              <span className="text-lg">📋</span>
+              <span className="text-sm font-medium">ทำแบบทดสอบก่อนเรียน</span>
+            </div>
+            <button
+              onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/pretest`)}
+              className="flex-shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              เริ่มทำ
+            </button>
+          </div>
+        )}
+        {hasPostTest && (
+          <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-3 text-lg font-bold text-gray-800">📝 แบบทดสอบหลังเรียน</h3>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <p className="flex-1 text-sm text-gray-500">ทำแบบทดสอบหลังเรียนให้ผ่าน 70% เพื่อรับใบประกาศ</p>
+              <button
+                onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/posttest`)}
+                className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+              >
+                ทำแบบทดสอบหลังเรียน
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col items-center justify-center min-h-[30vh] text-center px-4">
           <h2 className="text-xl font-semibold text-gray-700 mb-2">
             {t('course.accessDenied', 'Unable to access this course')}
           </h2>
@@ -230,6 +294,59 @@ const CourseClient = (props: any) => {
 
   const jsonLd = generateJsonLd()
 
+  // Backend unreachable (no status code) — show minimal page with exam sections only
+  if (!course) {
+    return (
+      <GeneralWrapperStyled>
+        <div className="pb-4 text-gray-400 text-sm">กำลังโหลดข้อมูลหลักสูตร...</div>
+
+        {hasPreTest && !preTestPassed && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <div className="flex items-center gap-2 text-blue-700">
+              <span className="text-lg">📋</span>
+              <span className="text-sm font-medium">ทำแบบทดสอบก่อนเรียนเพื่อประเมินความรู้เบื้องต้น</span>
+            </div>
+            <button
+              onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/pretest`)}
+              className="flex-shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              เริ่มทำ
+            </button>
+          </div>
+        )}
+
+        {hasPostTest && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-3 text-lg font-bold text-gray-800">
+              {hasCertificate ? '🏆 ใบประกาศนียบัตร' : '📝 แบบทดสอบหลังเรียน'}
+            </h3>
+            {hasCertificate ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <p className="flex-1 text-sm text-gray-500">คุณได้รับใบประกาศแล้ว</p>
+                <button
+                  onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/certificate`)}
+                  className="rounded-xl bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+                >
+                  ดูใบประกาศ
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <p className="flex-1 text-sm text-gray-500">ทำแบบทดสอบหลังเรียนให้ผ่าน 70% เพื่อรับใบประกาศ</p>
+                <button
+                  onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/posttest`)}
+                  className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  ทำแบบทดสอบหลังเรียน
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </GeneralWrapperStyled>
+    )
+  }
+
   return (
     <>
       {jsonLd && (
@@ -256,6 +373,22 @@ const CourseClient = (props: any) => {
                 courseUrl={getUriWithOrg(orgslug, `/course/${courseuuid}`)}
               />
             </div>
+
+            {/* Pre-test banner */}
+            {hasPreTest && !preTestPassed && (
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <span className="text-lg">📋</span>
+                  <span className="text-sm font-medium">ทำแบบทดสอบก่อนเรียนเพื่อประเมินความรู้เบื้องต้น</span>
+                </div>
+                <button
+                  onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/pretest`)}
+                  className="flex-shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  เริ่มทำ
+                </button>
+              </div>
+            )}
 
             <div className="flex flex-col md:flex-row gap-8 pt-2">
               <div className="w-full md:w-3/4 space-y-4">
@@ -588,6 +721,46 @@ const CourseClient = (props: any) => {
                 })}
               </div>
             </div>
+
+            {/* Post-test / Certificate section */}
+            {hasPostTest && (
+              <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h3 className="mb-3 text-lg font-bold text-gray-800">
+                  {hasCertificate ? '🏆 ใบประกาศนียบัตร' : '📝 แบบทดสอบหลังเรียน'}
+                </h3>
+                {hasCertificate ? (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <p className="flex-1 text-sm text-gray-500">คุณผ่านการทดสอบและได้รับใบประกาศแล้ว</p>
+                    <button
+                      onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/certificate`)}
+                      className="rounded-xl bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+                    >
+                      ดูใบประกาศ
+                    </button>
+                  </div>
+                ) : postTestPassed ? (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <p className="flex-1 text-sm text-gray-500">คุณผ่านการทดสอบแล้ว ดูใบประกาศได้เลย</p>
+                    <button
+                      onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/certificate`)}
+                      className="rounded-xl bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+                    >
+                      ดูใบประกาศ
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <p className="flex-1 text-sm text-gray-500">ทำแบบทดสอบหลังเรียนให้ผ่าน 70% เพื่อรับใบประกาศ</p>
+                    <button
+                      onClick={() => router.push(`/orgs/${orgslug}/course/${courseuuid}/posttest`)}
+                      className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                    >
+                      ทำแบบทดสอบหลังเรียน
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Community Section */}
             <CourseCommunitySection courseUuid={course.course_uuid} orgslug={orgslug} />

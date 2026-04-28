@@ -44,14 +44,17 @@ export const LiffProvider = ({ children }: { children: React.ReactNode }) => {
           const userProfile = await liff.getProfile()
           setProfile(userProfile)
 
-          // Sync to Supabase User table
+          // Sync to Supabase User table (best-effort — ignore RLS/auth errors)
           if (supabase) {
-            await supabase.from('User').upsert({
+            const { error: upsertError } = await supabase.from('User').upsert({
               id: userProfile.userId,
               displayName: userProfile.displayName,
               photoUrl: userProfile.pictureUrl,
               updatedAt: new Date().toISOString(),
             })
+            if (upsertError) {
+              console.warn('Supabase user sync skipped:', upsertError.message)
+            }
           }
         } else {
           // Optional: Auto-login if needed

@@ -9,7 +9,9 @@ import { getCourseThumbnailMediaDirectory } from '@services/media/media';
 import { useWindowSize } from 'usehooks-ts';
 import { useOrg } from '@components/Contexts/OrgContext';
 import { useLHSession } from '@components/Contexts/LHSessionContext';
+import { useLiff } from '@components/Contexts/LiffContext';
 import { getUserCertificates } from '@services/courses/certifications';
+import { getMyCertificate } from '@services/courses/assessments';
 import CertificatePreview from '@components/Dashboard/Pages/Course/EditCourseCertification/CertificatePreview';
 import { useTranslation } from 'react-i18next';
 
@@ -34,6 +36,8 @@ const CourseEndView: React.FC<CourseEndViewProps> = ({
   const { width, height } = useWindowSize();
   const org = useOrg() as any;
   const session = useLHSession() as any;
+  const { profile } = useLiff();
+  const [prismaHasCertificate, setPrismaHasCertificate] = useState(false);
   const [userCertificate, setUserCertificate] = useState<any>(null);
   const [isLoadingCertificate, setIsLoadingCertificate] = useState(false);
   const [certificateError, setCertificateError] = useState<string | null>(null);
@@ -115,6 +119,14 @@ const CourseEndView: React.FC<CourseEndViewProps> = ({
 
     fetchUserCertificate();
   }, [isCourseCompleted, courseUuid, session?.data?.tokens?.access_token, org?.id]);
+
+  useEffect(() => {
+    if (!isCourseCompleted || !profile?.userId) return
+    const cleanId = courseUuid.replace('course_', '')
+    getMyCertificate(cleanId, profile.userId).then((c) => {
+      setPrismaHasCertificate(!!c)
+    })
+  }, [isCourseCompleted, courseUuid, profile?.userId]);
 
   // Generate PDF using canvas
   const downloadCertificate = async () => {
@@ -513,10 +525,29 @@ const CourseEndView: React.FC<CourseEndViewProps> = ({
               </div>
             </div>
           ) : (
-            <div className="bg-gray-50 rounded-lg p-6">
-              <p className="text-gray-600">
-                {t('certificate.no_certificate_available')}
-              </p>
+            <div className="space-y-4">
+              {prismaHasCertificate ? (
+                <div className="flex justify-center">
+                  <Link
+                    href={`/orgs/${orgslug}/course/${courseUuid.replace('course_', '')}/certificate`}
+                    className="inline-flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition duration-200"
+                  >
+                    <Trophy className="w-5 h-5" />
+                    <span>ดูใบประกาศ</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-3">
+                  <p className="text-blue-800 font-medium">ทำแบบทดสอบหลังเรียนเพื่อรับใบประกาศ</p>
+                  <p className="text-blue-600 text-sm">คุณเรียนจบแล้ว! ทำ Post-test ให้ผ่าน 70% เพื่อรับใบประกาศ</p>
+                  <Link
+                    href={`/orgs/${orgslug}/course/${courseUuid.replace('course_', '')}/posttest`}
+                    className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition duration-200"
+                  >
+                    <span>ทำแบบทดสอบหลังเรียน →</span>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
