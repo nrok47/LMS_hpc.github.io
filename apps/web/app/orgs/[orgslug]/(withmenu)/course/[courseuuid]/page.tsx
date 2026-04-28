@@ -137,11 +137,13 @@ const CoursePage = async (params: any) => {
     notFound()
   }
 
-  // Only 404 if the backend explicitly returned 404 (course genuinely not found).
-  // If the backend is unreachable (fetchError.status is undefined), fall through
-  // so the course page can still render with exam/certificate sections.
-  if (!course_meta && fetchError?.status === 404 && !access_token) {
-    notFound()
+  // Only 404 if the backend explicitly returned HTTP 404.
+  // If backend is unreachable (status undefined), fall through to show exam sections.
+  if (!course_meta && fetchError && !access_token) {
+    const errStatus = (fetchError as { status?: number }).status
+    if (errStatus === 404) {
+      notFound()
+    }
   }
 
   // Build Course JSON-LD for structured data
